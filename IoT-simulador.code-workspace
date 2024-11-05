@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "client-vendedor",
+			"path": "client-vendedor"
+		},
+		{
+			"name": "server",
+			"path": "server"
+		}
+	],
+	"settings": {}
+}
