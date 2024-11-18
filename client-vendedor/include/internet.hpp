@@ -7,15 +7,15 @@
 #define WIFI_SSID "Wokwi-GUEST"
 #define WIFI_PASSWORD ""
 #define WIFI_CHANNEL 6
-#define HOST "127.0.0.1"
+#define HOST "192.168.0.105" // usar o ip da máquina. Use ipconfig para descobrir
 #define PORT 80
 
 using namespace websockets;
-
 class Internet
 {
 private:
     WebsocketsClient client;
+    u16_t clientId = 1;
     unsigned long lastTime = 0;
     unsigned long timerDelay = 1000;
 
@@ -24,41 +24,41 @@ private:
         client.send(responseJson);
     }
 
-    void response(String &response, float &price)
+    void response(String &response, float &profit, int &currentItems)
     {
+        JsonDocument data;
         JsonDocument doc;
-        doc["price"] = price;
-        serializeJson(doc, response);
-    }
-
-    void onMessageCallback(WebsocketsMessage message)
-    {
-        Serial.print("Got Message: ");
-        Serial.println(message.data());
+        doc["clientId"] = clientId;
+        doc["application"] = "hardware-client";
+        doc["currentItems"] = currentItems;
+        doc["profit"] = profit;
+        data["data"] = doc;
+        serializeJson(data, response);
     }
 
     void onEventsCallback(WebsocketsEvent event, String data)
     {
-        if (event == WebsocketsEvent::ConnectionOpened)
+        switch (event)
         {
-            Serial.println("Connnection Opened");
-        }
-        else if (event == WebsocketsEvent::ConnectionClosed)
-        {
-            Serial.println("Connnection Closed");
-        }
-        else if (event == WebsocketsEvent::GotPing)
-        {
+        case WebsocketsEvent::ConnectionOpened:
+            Serial.println("Connection Opened");
+            break;
+        case WebsocketsEvent::ConnectionClosed:
+            Serial.println("Connection Closed");
+            break;
+        case WebsocketsEvent::GotPing:
             Serial.println("Got a Ping!");
-        }
-        else if (event == WebsocketsEvent::GotPong)
-        {
+            break;
+        case WebsocketsEvent::GotPong:
             Serial.println("Got a Pong!");
+            break;
+        default:
+            break;
         }
     }
 
 public:
-    Internet() : client() {}
+    Internet(u16_t clientId) : client(), clientId(clientId) {}
 
     void init()
     {
@@ -73,12 +73,11 @@ public:
         Serial.println("Connected");
         Serial.println(WiFi.status());
         Serial.println(WiFi.localIP());
-        Serial.print("RRSI: ");
-        Serial.println(WiFi.RSSI());
+        Serial.print("Host: ");
         Serial.println(HOST);
 
         bool connected = false;
-        for (int i = 0; i < 5; i++) // Retry up to 5 times
+        for (int i = 0; i < 5; i++)
         {
             connected = client.connect(HOST, PORT, "/");
             if (connected)
@@ -87,44 +86,26 @@ public:
                 break;
             }
             Serial.println("Failed to connect, retrying...");
-            delay(2000); // Wait 2 seconds before retrying
+            delay(2000);
         }
         if (!connected)
         {
             Serial.println("Failed to connect after multiple attempts!");
             return;
         }
-        client.onMessage([this](WebsocketsMessage message)
-                         { this->onMessageCallback(message); });
         client.onEvent([this](WebsocketsEvent event, String data)
                        { this->onEventsCallback(event, data); });
-        client.send("Olá, servidor WebSocket!");
         client.ping();
     }
 
-    void loop(float &price)
+    void loop(float &profit, int &currentItems)
     {
         if ((millis() - lastTime) > timerDelay)
         {
             String res;
-            response(res, price);
-            Serial.print(res);
+            response(res, profit, currentItems);
             notify(res);
-            if (!client.available())
-            {
-                Serial.println("WebSocket disconnected, attempting to reconnect...");
-                client.close();
-                if (client.connect(HOST, PORT, "/"))
-                {
-                    Serial.println("Reconnected to WebSocket server.");
-                    client.send("Olá, servidor WebSocket!");
-                }
-                else
-                {
-                    Serial.println("Reconnection failed.");
-                }
-            }
-            else
+            if (client.available())
                 client.poll();
             lastTime = millis();
         }
