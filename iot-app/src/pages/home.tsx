@@ -30,7 +30,7 @@ const Home = () => {
       ws.addListener((msg) => {
         if (typeof msg.data === 'string') {
           const data = JSON.parse(msg.data) as DashboardData;
-          console.log(data)
+          console.log(data);
           setData(data);
         }
       });

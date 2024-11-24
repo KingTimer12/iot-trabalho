@@ -5,9 +5,9 @@ interface Seller {
 	profit: number;
 	toFinish: number;
 }
+const map = new Map<number, Seller>();
 
 const sellers = () => {
-	const map = new Map<number, Seller>();
 	map.set(1, {
 		name: "Jessica",
 		ativo: false,
@@ -37,6 +37,7 @@ const sellers = () => {
 
 	const update = (id: number, seller: Seller) => {
 		map.set(id, seller);
+		console.log('id', seller)
 		return { id, ...seller };
 	};
 

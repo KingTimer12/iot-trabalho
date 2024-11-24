@@ -16,7 +16,7 @@ const AppSidebar = () => {
   const items = [
     {
       title: 'Dashboard',
-      url: '#',
+      url: '/home',
       icon: Home,
     },
     {
@@ -26,7 +26,7 @@ const AppSidebar = () => {
     },
     {
       title: 'Vendedores',
-      url: '#',
+      url: '/vendedores',
       icon: HardHat,
     },
   ];
